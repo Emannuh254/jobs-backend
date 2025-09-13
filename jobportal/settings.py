@@ -4,19 +4,17 @@ from dotenv import load_dotenv
 import dj_database_url
 from datetime import timedelta
 
-# Load environment variables from .env file
+# Load environment variables from .env
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("SECRET_KEY")
-
-# SECURITY WARNING: don't run with debug turned on in production!
+# SECURITY
+SECRET_KEY = os.getenv("SECRET_KEY", "insecure-secret-key")  # Replace in production
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")  # e.g. "example.com,www.example.com"
 
-ALLOWED_HOSTS = ["*"]  # For production, set specific hosts
-
+# Applications
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -32,7 +30,7 @@ INSTALLED_APPS = [
     "accounts",
     "jobs",
     "referrals",
-    "applications"
+    "applications",
 ]
 
 MIDDLEWARE = [
@@ -66,12 +64,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "jobportal.wsgi.application"
 
-# Database configuration using DATABASE_URL from .env
+# Database (Postgres on Render; fallback to SQLite locally)
 DATABASES = {
     "default": dj_database_url.config(
-        default=os.getenv("DATABASE_URL"),
+        default=os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
         conn_max_age=600,
-        ssl_require=True
+        ssl_require=not DEBUG,
     )
 }
 
@@ -96,12 +94,13 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# CORS settings
-CORS_ALLOWED_ORIGINS = [
-    os.getenv("CORS_ORIGIN", "https://emannuh254.github.io"),
-]
+# CORS
+CORS_ALLOWED_ORIGINS = os.getenv(
+    "CORS_ALLOWED_ORIGINS",
+    "https://emannuh254.github.io,http://localhost:3000"
+).split(",")
 
-# REST Framework settings
+# Django REST Framework
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -121,8 +120,8 @@ SIMPLE_JWT = {
 # Custom user model
 AUTH_USER_MODEL = "accounts.User"
 
-# Google OAuth settings
+# Google OAuth2
 GOOGLE_OAUTH2_CLIENT_ID = os.getenv("GOOGLE_OAUTH2_CLIENT_ID", "")
 
-# Port configuration (not used by Django but can be useful)
+# Render port (for local dev fallback)
 PORT = int(os.getenv("PORT", 8000))
