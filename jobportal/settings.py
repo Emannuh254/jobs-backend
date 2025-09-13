@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 import dj_database_url
+from datetime import timedelta
 
 # Load environment variables from .env file
 load_dotenv()
@@ -111,8 +112,6 @@ REST_FRAMEWORK = {
 }
 
 # JWT settings
-from datetime import timedelta
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=int(os.getenv("JWT_EXP_DAYS", 1))),
@@ -121,6 +120,9 @@ SIMPLE_JWT = {
 
 # Custom user model
 AUTH_USER_MODEL = "accounts.User"
+
+# Google OAuth settings
+GOOGLE_OAUTH2_CLIENT_ID = os.getenv("GOOGLE_OAUTH2_CLIENT_ID", "")
 
 # Port configuration (not used by Django but can be useful)
 PORT = int(os.getenv("PORT", 8000))
