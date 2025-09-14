@@ -206,7 +206,7 @@ SIMPLE_JWT = {
 }
 
 # ==========================
-# CORS
+# CORS (Fixed)
 # ==========================
 # Get CORS origins from environment or use defaults
 cors_origins = env.list("CORS_ALLOWED_ORIGINS", default=[
@@ -221,11 +221,22 @@ frontend_url = env("FRONTEND_URL", default="https://emannuh254.github.io")
 if frontend_url not in cors_origins:
     cors_origins.append(frontend_url)
 
+# Also include the Render service URL
+render_url = "https://jobs-backend-1-8pw2.onrender.com"
+if render_url not in cors_origins:
+    cors_origins.append(render_url)
+
+# Add GitHub Pages URL explicitly
+github_pages_url = "https://emannuh254.github.io"
+if github_pages_url not in cors_origins:
+    cors_origins.append(github_pages_url)
+
 CORS_ALLOWED_ORIGINS = cors_origins
 
 # For debugging - print the allowed origins
 print(f"CORS_ALLOWED_ORIGINS: {CORS_ALLOWED_ORIGINS}")
 
+# Additional CORS settings
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     "DELETE",
@@ -250,6 +261,11 @@ CORS_EXPOSE_HEADERS = [
     "Content-Type",
     "X-CSRFToken",
 ]
+
+# Allow all origins in development for easier testing
+if DEBUG:
+    CORS_ORIGIN_ALLOW_ALL = True
+    print("WARNING: CORS_ORIGIN_ALLOW_ALL is True for development only")
 
 # ==========================
 # CSRF Settings
