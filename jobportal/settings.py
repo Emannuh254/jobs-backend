@@ -2,12 +2,10 @@ import os
 from pathlib import Path
 from datetime import timedelta
 import environ
-
 # ==========================
 # Base Directory
 # ==========================
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 # ==========================
 # Environment Variables
 # ==========================
@@ -15,7 +13,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
 # Load .env file
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
-
 # ==========================
 # Environment Variable Validation
 # ==========================
@@ -30,14 +27,12 @@ required_env_vars = [
 for var in required_env_vars:
     if not env(var):
         raise ValueError(f"Environment variable {var} is not set")
-
 # ==========================
 # Core Settings
 # ==========================
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-change-me-in-production")
 DEBUG = env("DEBUG", default=False)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1", "jobs-backend-1-8pw2.onrender.com"])
-
 # ==========================
 # Installed Apps
 # ==========================
@@ -59,7 +54,6 @@ INSTALLED_APPS = [
     "referrals",           # Referrals app
     "applications",        # Applications app
 ]
-
 # ==========================
 # Middleware
 # ==========================
@@ -73,13 +67,11 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-
 # ==========================
 # URL / WSGI
 # ==========================
 ROOT_URLCONF = "jobportal.urls"
 WSGI_APPLICATION = "jobportal.wsgi.application"
-
 # ==========================
 # Templates
 # ==========================
@@ -98,7 +90,6 @@ TEMPLATES = [
         },
     },
 ]
-
 # ==========================
 # Database
 # ==========================
@@ -109,7 +100,6 @@ DATABASES = {
         engine="django.db.backends.postgresql"
     )
 }
-
 # ==========================
 # Passwords
 # ==========================
@@ -119,7 +109,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
-
 # ==========================
 # Authentication Settings
 # ==========================
@@ -127,12 +116,10 @@ AUTHENTICATION_BACKENDS = [
     'accounts.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
-
 # ==========================
 # Custom User Model
 # ==========================
 AUTH_USER_MODEL = 'accounts.User'
-
 # ==========================
 # Internationalization
 # ==========================
@@ -147,7 +134,6 @@ LANGUAGES = [
 LOCALE_PATHS = [
     BASE_DIR / 'locale',
 ]
-
 # ==========================
 # Static & Media Files
 # ==========================
@@ -155,7 +141,6 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
-
 # ==========================
 # File Upload Settings
 # ==========================
@@ -163,7 +148,6 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB
 FILE_UPLOAD_PERMISSIONS = 0o644
 FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o755
-
 # ==========================
 # Django REST Framework
 # ==========================
@@ -183,7 +167,6 @@ REST_FRAMEWORK = {
         "rest_framework.parsers.JSONParser",
     ],
 }
-
 # ==========================
 # Simple JWT
 # ==========================
@@ -191,7 +174,7 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=int(env("JWT_EXP_DAYS", default=7))),
     "ROTATE_REFRESH_TOKENS": True,
-    "BLACKLIST_AFTER_ROTATION": True,
+    "BLACKLIST_AFTER_ROTATION = True",
     "ALGORITHM": "HS256",
     "SIGNING_KEY": env("SECRET_KEY"),
     "AUTH_HEADER_TYPES": ("Bearer",),
@@ -204,39 +187,11 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
-
 # ==========================
-# CORS (Fixed)
+# CORS (Allow All Origins)
 # ==========================
-# Get CORS origins from environment or use defaults
-cors_origins = env.list("CORS_ALLOWED_ORIGINS", default=[
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:5500",
-    "http://127.0.0.1:5500",
-])
-
-# Always include the frontend URL
-frontend_url = env("FRONTEND_URL", default="https://emannuh254.github.io")
-if frontend_url not in cors_origins:
-    cors_origins.append(frontend_url)
-
-# Also include the Render service URL
-render_url = "https://jobs-backend-1-8pw2.onrender.com"
-if render_url not in cors_origins:
-    cors_origins.append(render_url)
-
-# Add GitHub Pages URL explicitly
-github_pages_url = "https://emannuh254.github.io"
-if github_pages_url not in cors_origins:
-    cors_origins.append(github_pages_url)
-
-CORS_ALLOWED_ORIGINS = cors_origins
-
-# For debugging - print the allowed origins
-print(f"CORS_ALLOWED_ORIGINS: {CORS_ALLOWED_ORIGINS}")
-
-# Additional CORS settings
+# Allow all origins for development - you can restrict this in production
+CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     "DELETE",
@@ -262,18 +217,14 @@ CORS_EXPOSE_HEADERS = [
     "X-CSRFToken",
 ]
 
-# Allow all origins in development for easier testing
-if DEBUG:
-    CORS_ORIGIN_ALLOW_ALL = True
-    print("WARNING: CORS_ORIGIN_ALLOW_ALL is True for development only")
-
+# Print a warning that CORS is wide open
+print("WARNING: CORS is configured to allow all origins. This should be restricted in production!")
 # ==========================
 # CSRF Settings
 # ==========================
 CSRF_USE_SESSIONS = True
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
-
 # ==========================
 # Email Settings
 # ==========================
@@ -286,17 +237,14 @@ EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@example.com")
 EMAIL_SUBJECT_PREFIX = "[Your App] "
 EMAIL_TIMEOUT = 30
-
 # ==========================
 # Frontend URL
 # ==========================
 FRONTEND_URL = env("FRONTEND_URL", default="https://emannuh254.github.io")
-
 # ==========================
 # Google OAuth2
 # ==========================
 GOOGLE_OAUTH2_CLIENT_ID = env("GOOGLE_OAUTH2_CLIENT_ID", default="")
-
 # ==========================
 # Cache
 # ==========================
@@ -306,7 +254,6 @@ CACHES = {
         'LOCATION': 'unique-snowflake',
     }
 }
-
 # ==========================
 # Logging
 # ==========================
@@ -342,12 +289,10 @@ LOGGING = {
         },
     },
 }
-
 # Create logs directory if it doesn't exist
 import os
 if not os.path.exists(BASE_DIR / 'logs'):
     os.makedirs(BASE_DIR / 'logs')
-
 # ==========================
 # Security Settings
 # ==========================
@@ -358,7 +303,6 @@ CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
-
 # Only enforce security settings when DEBUG is False
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
@@ -380,12 +324,10 @@ if not DEBUG:
     
     # Static files settings for production
     STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
-
 # ==========================
 # Default Primary Key
 # ==========================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
 # ==========================
 # Port
 # ==========================
