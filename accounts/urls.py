@@ -1,8 +1,11 @@
 # accounts/urls.py
 from django.urls import path
-from .views import RegisterView
+from . import views
 
 urlpatterns = [
-    path('register/', RegisterView.as_view(), name='register'),
-    # Add other authentication URLs
+    path('register/', views.RegisterView.as_view(), name='register'),
+    path('login/', views.LoginView.as_view(), name='login'),  # Assuming you have a LoginView
+    path('profile/', views.profile, name='profile'),
+    path('google-login/', views.GoogleLoginView.as_view(), name='google-login'),
+    path('forgot-password/', views.forgot_password, name='forgot-password'),
 ]
