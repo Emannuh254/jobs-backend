@@ -120,11 +120,17 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # ===================================
 # CORS
 # ===================================
+# CORS
 CORS_ALLOWED_ORIGINS = os.getenv(
     "CORS_ALLOWED_ORIGINS",
     "https://emannuh254.github.io,http://127.0.0.1:5500"
 ).split(",")
-CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+
+# CSRF trusted origins must include scheme
+CSRF_TRUSTED_ORIGINS = [
+    origin for origin in CORS_ALLOWED_ORIGINS if origin.startswith(("http://", "https://"))
+]
+
 
 # ===================================
 # Django REST Framework
