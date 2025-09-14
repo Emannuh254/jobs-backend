@@ -5,3 +5,5 @@ INFO 2025-09-14 13:03:32,685 autoreload 1393761 139841860579584 Watching for fil
 INFO 2025-09-14 13:03:45,135 autoreload 1393761 139841860579584 /home/ghost/jobportal/accounts/urls.py changed, reloading.
 INFO 2025-09-14 13:03:46,585 autoreload 1393969 140226587164928 Watching for file changes with StatReloader
 INFO 2025-09-14 13:04:09,197 autoreload 1394362 139979804467456 Watching for file changes with StatReloader
+INFO 2025-09-14 13:20:15,170 autoreload 1405509 140198626185472 Watching for file changes with StatReloader
+INFO 2025-09-14 13:22:09,426 autoreload 1405509 140198626185472 /home/ghost/jobportal/jobportal/settings.py changed, reloading.
