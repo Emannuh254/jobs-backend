@@ -163,8 +163,8 @@ class GoogleLoginView(View):
             return JsonResponse({'error': str(e)}, status=500)
 
 @csrf_exempt
-def profile(request):
-    if request.method == 'GET':
+class ProfileView(View):
+    def get(self, request):
         try:
             # In a real implementation, you would authenticate the user first
             # For now, we'll return a placeholder
@@ -174,12 +174,10 @@ def profile(request):
             }, status=200)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
-    else:
-        return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 @csrf_exempt
-def forgot_password(request):
-    if request.method == 'POST':
+class ForgotPasswordView(View):
+    def post(self, request):
         try:
             data = json.loads(request.body)
             email = data.get('email')
@@ -220,5 +218,3 @@ def forgot_password(request):
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
-    else:
-        return JsonResponse({'error': 'Method not allowed'}, status=405)
