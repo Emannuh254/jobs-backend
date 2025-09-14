@@ -13,9 +13,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ==========================
 # Initialize environment
 env = environ.Env()
-
 # Load .env file
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+
+# ==========================
+# Environment Variable Validation
+# ==========================
+# Validate critical environment variables
+required_env_vars = [
+    "SECRET_KEY",
+    "DATABASE_URL",
+    "EMAIL_HOST_USER",
+    "EMAIL_HOST_PASSWORD",
+    "GOOGLE_OAUTH2_CLIENT_ID",
+]
+
+for var in required_env_vars:
+    if not env(var):
+        raise ValueError(f"Environment variable {var} is not set")
 
 # ==========================
 # Core Settings
@@ -107,12 +122,32 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # ==========================
+# Authentication Settings
+# ==========================
+AUTHENTICATION_BACKENDS = [
+    'accounts.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# ==========================
+# Custom User Model
+# ==========================
+AUTH_USER_MODEL = 'accounts.User'
+
+# ==========================
 # Internationalization
 # ==========================
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
+USE_L10N = True
+LANGUAGES = [
+    ('en', 'English'),
+]
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
 
 # ==========================
 # Static & Media Files
@@ -123,6 +158,14 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # ==========================
+# File Upload Settings
+# ==========================
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB
+FILE_UPLOAD_PERMISSIONS = 0o644
+FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o755
+
+# ==========================
 # Django REST Framework
 # ==========================
 REST_FRAMEWORK = {
@@ -130,7 +173,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
@@ -155,6 +198,12 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
 
 # ==========================
@@ -167,7 +216,7 @@ CORS_ALLOWED_ORIGINS = env.list(
         "http://127.0.0.1:3000",
         "http://localhost:5500",
         "http://127.0.0.1:5500",
-        "https://emannuh254.github.io",  # Add your frontend URL
+        "https://emannuh254.github.io",
     ]
 )
 CORS_ALLOW_CREDENTIALS = True
@@ -190,6 +239,17 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
     "x-requested-with",
 ]
+CORS_EXPOSE_HEADERS = [
+    "Content-Type",
+    "X-CSRFToken",
+]
+
+# ==========================
+# CSRF Settings
+# ==========================
+CSRF_USE_SESSIONS = True
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
 
 # ==========================
 # Email Settings
@@ -201,6 +261,8 @@ EMAIL_USE_TLS = env("EMAIL_USE_TLS", default=True)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@example.com")
+EMAIL_SUBJECT_PREFIX = "[Your App] "
+EMAIL_TIMEOUT = 30
 
 # ==========================
 # Frontend URL
@@ -213,7 +275,88 @@ FRONTEND_URL = env("FRONTEND_URL", default="https://emannuh254.github.io")
 GOOGLE_OAUTH2_CLIENT_ID = env("GOOGLE_OAUTH2_CLIENT_ID", default="")
 
 # ==========================
-# Custom User Model
+# Cache
+# ==========================
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
+
+# ==========================
+# Logging
+# ==========================
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'django.log',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+# Create logs directory if it doesn't exist
+import os
+if not os.path.exists(BASE_DIR / 'logs'):
+    os.makedirs(BASE_DIR / 'logs')
+
+# ==========================
+# Security Settings
+# ==========================
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+# Only enforce security settings when DEBUG is False
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    
+    # Email backend for production
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    
+    # Cache backend for production
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': env("REDIS_URL", default="redis://127.0.0.1:6379/1"),
+        }
+    }
+    
+    # Static files settings for production
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
 
 # ==========================
 # Default Primary Key
@@ -224,17 +367,3 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Port
 # ==========================
 PORT = int(os.getenv("PORT", 8000))
-
-# ==========================
-# Security Settings
-# ==========================
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = "DENY"
-CSRF_COOKIE_SECURE = not DEBUG
-SESSION_COOKIE_SECURE = not DEBUG
-SECURE_SSL_REDIRECT = not DEBUG
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
-SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
