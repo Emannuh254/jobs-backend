@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     buildCommand: "./build.sh"
-    startCommand: "gunicorn jobportal.wsgi:application"
+    startCommand: "gunicorn jobportal.wsgi:application --bind 0.0.0.0:$PORT"
     envVars:
       - key: SECRET_KEY
         sync: false
@@ -14,8 +14,6 @@ services:
         fromDatabase:
           name: jobportal-db
           property: connectionString
-      - key: PORT
-        value: "8000"
 
 databases:
   - name: jobportal-db
