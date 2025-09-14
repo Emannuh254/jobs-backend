@@ -1,1 +1,7 @@
 INFO 2025-09-14 12:56:48,751 autoreload 1388770 140266657595648 Watching for file changes with StatReloader
+INFO 2025-09-14 13:00:51,766 autoreload 1391988 139687753441536 Watching for file changes with StatReloader
+INFO 2025-09-14 13:03:31,104 autoreload 1391988 139687753441536 /home/ghost/jobportal/accounts/views.py changed, reloading.
+INFO 2025-09-14 13:03:32,685 autoreload 1393761 139841860579584 Watching for file changes with StatReloader
+INFO 2025-09-14 13:03:45,135 autoreload 1393761 139841860579584 /home/ghost/jobportal/accounts/urls.py changed, reloading.
+INFO 2025-09-14 13:03:46,585 autoreload 1393969 140226587164928 Watching for file changes with StatReloader
+INFO 2025-09-14 13:04:09,197 autoreload 1394362 139979804467456 Watching for file changes with StatReloader

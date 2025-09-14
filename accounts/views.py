@@ -41,8 +41,8 @@ def generate_unique_username(email):
         counter += 1
     return username
 
-@csrf_exempt
 class RegisterView(View):
+    @csrf_exempt
     def post(self, request):
         data = get_json_data(request)
         if data is None:
@@ -86,8 +86,8 @@ class RegisterView(View):
             }
         }, status=201)
 
-@csrf_exempt
 class LoginView(View):
+    @csrf_exempt
     def post(self, request):
         data = get_json_data(request)
         if data is None:
@@ -120,8 +120,8 @@ class LoginView(View):
         else:
             return JsonResponse({'error': 'Invalid credentials'}, status=401)
 
-@csrf_exempt
 class GoogleLoginView(View):
+    @csrf_exempt
     def post(self, request):
         if not GOOGLE_AUTH_AVAILABLE:
             return JsonResponse({'error': 'Google authentication libraries not available'}, status=500)
@@ -189,8 +189,8 @@ class GoogleLoginView(View):
             }
         })
 
-@csrf_exempt
 class ProfileView(View):
+    @csrf_exempt
     def get(self, request):
         try:
             # Authenticate user using JWT
@@ -237,8 +237,8 @@ class ProfileView(View):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
 
-@csrf_exempt
 class ForgotPasswordView(View):
+    @csrf_exempt
     def post(self, request):
         data = get_json_data(request)
         if data is None:
