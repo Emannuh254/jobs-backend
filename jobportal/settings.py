@@ -1,54 +1,53 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv
-import dj_database_url
+import environ
 from datetime import timedelta
 
-# ===================================
-# Load environment variables
-# ===================================
-load_dotenv()
-
+# ==========================
+# Base Directory
+# ==========================
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ===================================
-# Security
-# ===================================
-SECRET_KEY = os.getenv("SECRET_KEY", "insecure-secret-key")
-DEBUG = os.getenv("DEBUG", "False").lower() == "true"
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
+# ==========================
+# Environment Variables
+# ==========================
+env = environ.Env(
+    DEBUG=(bool, False)
+)
 
-# ===================================
-# Installed apps
-# ===================================
+# Load .env file
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+
+# ==========================
+# Core Settings
+# ==========================
+SECRET_KEY = env("SECRET_KEY")
+DEBUG = env("DEBUG")
+ALLOWED_HOSTS = ["*"]
+
+# ==========================
+# Installed Apps
+# ==========================
 INSTALLED_APPS = [
-    # Django
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
-    # Third-party
-    "rest_framework",
-    "rest_framework_simplejwt",
-    "corsheaders",
-
-    # Local apps
-    "accounts",
-    "jobs",
-    "referrals",
-    "applications",
+    "corsheaders",          # For CORS
+    "rest_framework",       # Django REST Framework
+    "rest_framework_simplejwt.token_blacklist",
+    "jobportal_app",        # Your app
 ]
 
-# ===================================
+# ==========================
 # Middleware
-# ===================================
+# ==========================
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",  # Must be high in order
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -56,11 +55,15 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-# ===================================
-# URL + WSGI
-# ===================================
+# ==========================
+# URL / WSGI
+# ==========================
 ROOT_URLCONF = "jobportal.urls"
+WSGI_APPLICATION = "jobportal.wsgi.application"
 
+# ==========================
+# Templates
+# ==========================
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -77,110 +80,83 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "jobportal.wsgi.application"
-
-# ===================================
+# ==========================
 # Database
-# ===================================
+# ==========================
 DATABASES = {
-    "default": dj_database_url.config(
-        default=os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
-        conn_max_age=600,
-        ssl_require=not DEBUG,
-    )
+    "default": env.db("DATABASE_URL")
 }
 
-# ===================================
-# Password validation
-# ===================================
+# ==========================
+# Passwords
+# ==========================
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-        "OPTIONS": {"min_length": 8},
-    },
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# ===================================
+# ==========================
 # Internationalization
-# ===================================
+# ==========================
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# ===================================
-# Static files
-# ===================================
+# ==========================
+# Static & Media Files
+# ==========================
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"   # for production (collected files)
-STATICFILES_DIRS = [BASE_DIR / "static"]  # for development
+STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
-# ===================================
-# Primary key type
-# ===================================
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# ===================================
-# CORS & CSRF
-# ===================================
-CORS_ALLOWED_ORIGINS = os.getenv(
-    "CORS_ALLOWED_ORIGINS",
-    "https://emannuh254.github.io,http://127.0.0.1:5500"
-).split(",")
-
-CSRF_TRUSTED_ORIGINS = os.getenv(
-    "CSRF_TRUSTED_ORIGINS",
-    "https://jobportal.onrender.com"
-).split(",")
-
-# ===================================
+# ==========================
 # Django REST Framework
-# ===================================
+# ==========================
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
+    "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ],
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-    ],
-}
-
-# ===================================
-# JWT (SimpleJWT)
-# ===================================
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    "REFRESH_TOKEN_LIFETIME": timedelta(
-        days=int(os.getenv("JWT_EXP_DAYS", 1))
     ),
-    "ROTATE_REFRESH_TOKENS": True,
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
 }
 
-# ===================================
-# Custom user model
-# ===================================
-AUTH_USER_MODEL = "accounts.User"
+# ==========================
+# Simple JWT
+# ==========================
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=int(env("JWT_EXP_DAYS", default=1))),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+}
 
-# ===================================
-# Google OAuth2
-# ===================================
-GOOGLE_OAUTH2_CLIENT_ID = os.getenv("GOOGLE_OAUTH2_CLIENT_ID", "")
+# ==========================
+# CORS
+# ==========================
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 
-# ===================================
-# Email settings
-# ===================================
+# ==========================
+# Email Settings
+# ==========================
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@jobportal.com")
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_PORT = env("EMAIL_PORT")
+EMAIL_USE_TLS = env("EMAIL_USE_TLS")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 
-# ===================================
+# ==========================
 # Frontend URL
-# ===================================
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:5500")
+# ==========================
+FRONTEND_URL = env("FRONTEND_URL")
+
+# ==========================
+# Default Primary Key
+# ==========================
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
