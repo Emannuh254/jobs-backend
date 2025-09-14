@@ -214,8 +214,6 @@ GOOGLE_OAUTH2_CLIENT_ID = env("GOOGLE_OAUTH2_CLIENT_ID", default="")
 
 # ==========================
 # Custom User Model
-# ==========================
-AUTH_USER_MODEL = "accounts.User"
 
 # ==========================
 # Default Primary Key

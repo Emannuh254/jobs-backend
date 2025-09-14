@@ -1,19 +1,28 @@
-from django.http import JsonResponse
 # jobportal/views.py
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
 
+@require_GET
 def health_check(request):
-    return JsonResponse({"status": "ok"}, status=200)
-
-def api_info(request):
+    """Health check endpoint for monitoring"""
     return JsonResponse({
-        "message": "Job Portal API is running",
-        "version": "1.0",
+        "status": "ok",
+        "message": "Service is running",
+        "version": "1.0.0"
+    })
+
+@require_GET
+def api_info(request):
+    """API information endpoint"""
+    return JsonResponse({
+        "name": "Job Portal API",
+        "version": "1.0.0",
         "endpoints": {
-            "auth": "/auth/",
-            "register": "/auth/register/",
-            "login": "/auth/login/",
-            "google-login": "/auth/google-login/",
-            "profile": "/auth/profile/",
-            "forgot-password": "/auth/forgot-password/"
+            "auth": {
+                "register": "/auth/register/",
+                "login": "/auth/login/",
+                "google-login": "/auth/google-login/",
+                "forgot-password": "/auth/forgot-password/"
+            }
         }
     })
