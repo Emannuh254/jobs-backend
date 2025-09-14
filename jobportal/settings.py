@@ -57,8 +57,21 @@ INSTALLED_APPS = [
 # ==========================
 # Middleware
 # ==========================
+# MIDDLEWARE = [
+#     "corsheaders.middleware.CorsMiddleware",  # Must be at the top
+#     "django.middleware.security.SecurityMiddleware",
+#     "django.contrib.sessions.middleware.SessionMiddleware",
+#     "django.middleware.common.CommonMiddleware",
+#     "django.middleware.csrf.CsrfViewMiddleware",
+#     "django.contrib.auth.middleware.AuthenticationMiddleware",
+#     "django.contrib.messages.middleware.MessageMiddleware",
+#     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+# ]
+# ==========================
+# Middleware
+# ==========================
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",  # Must be at the top
+    "cors_middleware.CustomCorsMiddleware",  # Custom CORS middleware at the top
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -67,6 +80,12 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+# ==========================
+# CORS (Bypass corsheaders)
+# ==========================
+# We're using a custom middleware instead of corsheaders
+# Remove corsheaders from installed apps if you want
 # ==========================
 # URL / WSGI
 # ==========================
@@ -191,31 +210,31 @@ SIMPLE_JWT = {
 # CORS (Allow All Origins)
 # ==========================
 # Allow all origins for development - you can restrict this in production
-CORS_ORIGIN_ALLOW_ALL = True
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_METHODS = [
-    "DELETE",
-    "GET",
-    "OPTIONS",
-    "PATCH",
-    "POST",
-    "PUT",
-]
-CORS_ALLOW_HEADERS = [
-    "accept",
-    "accept-encoding",
-    "authorization",
-    "content-type",
-    "dnt",
-    "origin",
-    "user-agent",
-    "x-csrftoken",
-    "x-requested-with",
-]
-CORS_EXPOSE_HEADERS = [
-    "Content-Type",
-    "X-CSRFToken",
-]
+# CORS_ORIGIN_ALLOW_ALL = True
+# CORS_ALLOW_CREDENTIALS = True
+# CORS_ALLOW_METHODS = [
+#     "DELETE",
+#     "GET",
+#     "OPTIONS",
+#     "PATCH",
+#     "POST",
+#     "PUT",
+# ]
+# CORS_ALLOW_HEADERS = [
+#     "accept",
+#     "accept-encoding",
+#     "authorization",
+#     "content-type",
+#     "dnt",
+#     "origin",
+#     "user-agent",
+#     "x-csrftoken",
+#     "x-requested-with",
+# ]
+# CORS_EXPOSE_HEADERS = [
+#     "Content-Type",
+#     "X-CSRFToken",
+# ]
 
 # Print a warning that CORS is wide open
 print("WARNING: CORS is configured to allow all origins. This should be restricted in production!")
