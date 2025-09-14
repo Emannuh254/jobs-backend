@@ -11,4 +11,6 @@ class CustomUserAdmin(UserAdmin):
     
     fieldsets = UserAdmin.fieldsets + (
         ('Referral Info', {'fields': ('referral_code', 'points')}),
+        ('Google Auth', {'fields': ('google_id', 'google_name', 'google_picture')}),
+        ('Password Reset', {'fields': ('password_reset_token',)}),
     )

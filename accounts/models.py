@@ -1,4 +1,3 @@
-# accounts/models.py
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 import random
@@ -10,6 +9,7 @@ class User(AbstractUser):
     google_id = models.CharField(max_length=100, blank=True, null=True)
     google_name = models.CharField(max_length=100, blank=True, null=True)
     google_picture = models.URLField(blank=True, null=True)
+    password_reset_token = models.CharField(max_length=100, blank=True, null=True)
     
     def save(self, *args, **kwargs):
         if not self.referral_code:
