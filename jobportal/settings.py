@@ -213,6 +213,10 @@ AUTH_USER_MODEL = "accounts.User"
 # Default Primary Key
 # ==========================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+# ==========================
+# Port
+# ==========================
+PORT = int(os.getenv("PORT", 8000))
 
 # ==========================
 # Security Settings
