@@ -4,7 +4,6 @@ services:
     env: python
     plan: free
     buildCommand: "./build.sh"
-    startCommand: "gunicorn jobportal.wsgi:application --bind 0.0.0.0:$PORT"
     envVars:
       - key: SECRET_KEY
         sync: false
@@ -14,6 +13,7 @@ services:
         fromDatabase:
           name: jobportal-db
           property: connectionString
-
-databases:
-  - name: jobportal-db
+      - key: ALLOWED_HOSTS
+        value: "jobportal.onrender.com"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://emannuh254.github.io,http://127.0.0.1:5500"
