@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv
 from datetime import timedelta
 import environ
 
@@ -12,18 +11,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ==========================
 # Environment Variables
 # ==========================
-# Load .env file
-load_dotenv(os.path.join(BASE_DIR, ".env"))
-
 # Initialize environment
 env = environ.Env()
+
+# Load .env file
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 # ==========================
 # Core Settings
 # ==========================
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-change-me-in-production")
 DEBUG = env("DEBUG", default=False)
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1", "jobs-backend-1-8pw2.onrender.com"])
 
 # ==========================
 # Installed Apps
@@ -51,9 +50,9 @@ INSTALLED_APPS = [
 # Middleware
 # ==========================
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",  # Must be at the top
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "corsheaders.middleware.CorsMiddleware",  # Must be high in order
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -65,7 +64,6 @@ MIDDLEWARE = [
 # URL / WSGI
 # ==========================
 ROOT_URLCONF = "jobportal.urls"
-
 WSGI_APPLICATION = "jobportal.wsgi.application"
 
 # ==========================
@@ -136,6 +134,12 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+    ],
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+    ],
 }
 
 # ==========================
@@ -148,6 +152,9 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
     "ALGORITHM": "HS256",
     "SIGNING_KEY": env("SECRET_KEY"),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
 }
 
 # ==========================
@@ -160,6 +167,7 @@ CORS_ALLOWED_ORIGINS = env.list(
         "http://127.0.0.1:3000",
         "http://localhost:5500",
         "http://127.0.0.1:5500",
+        "https://emannuh254.github.io",  # Add your frontend URL
     ]
 )
 CORS_ALLOW_CREDENTIALS = True
@@ -197,7 +205,7 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@example.com")
 # ==========================
 # Frontend URL
 # ==========================
-FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
+FRONTEND_URL = env("FRONTEND_URL", default="https://emannuh254.github.io")
 
 # ==========================
 # Google OAuth2
@@ -213,6 +221,7 @@ AUTH_USER_MODEL = "accounts.User"
 # Default Primary Key
 # ==========================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
 # ==========================
 # Port
 # ==========================
@@ -226,3 +235,8 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG
+SECURE_SSL_REDIRECT = not DEBUG
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
