@@ -1,4 +1,3 @@
-# jobportal/views.py
 from django.http import JsonResponse
 
 def api_info(request):

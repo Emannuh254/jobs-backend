@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
-import environ
+from dotenv import load_dotenv
 from datetime import timedelta
+import environ
 
 # ==========================
 # Base Directory
@@ -11,19 +12,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ==========================
 # Environment Variables
 # ==========================
-env = environ.Env(
-    DEBUG=(bool, False)
-)
-
 # Load .env file
-environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+# Initialize environment
+env = environ.Env()
 
 # ==========================
 # Core Settings
 # ==========================
-SECRET_KEY = env("SECRET_KEY")
-DEBUG = env("DEBUG")
-ALLOWED_HOSTS = ["*"]
+SECRET_KEY = env("SECRET_KEY", default="django-insecure-change-me-in-production")
+DEBUG = env("DEBUG", default=False)
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
 # ==========================
 # Installed Apps
@@ -35,10 +35,16 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Third-party apps
     "corsheaders",          # For CORS
     "rest_framework",       # Django REST Framework
+    "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
-    "jobportal_app",        # Your app
+    # Local apps
+    "accounts",             # Your app
+    "jobs",                # Jobs app
+    "referrals",           # Referrals app
+    "applications",        # Applications app
 ]
 
 # ==========================
@@ -59,6 +65,7 @@ MIDDLEWARE = [
 # URL / WSGI
 # ==========================
 ROOT_URLCONF = "jobportal.urls"
+
 WSGI_APPLICATION = "jobportal.wsgi.application"
 
 # ==========================
@@ -84,7 +91,11 @@ TEMPLATES = [
 # Database
 # ==========================
 DATABASES = {
-    "default": env.db("DATABASE_URL")
+    "default": env.db_url(
+        "DATABASE_URL",
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        engine="django.db.backends.postgresql"
+    )
 }
 
 # ==========================
@@ -92,7 +103,7 @@ DATABASES = {
 # ==========================
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
@@ -117,46 +128,97 @@ MEDIA_ROOT = BASE_DIR / "media"
 # Django REST Framework
 # ==========================
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
+    "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": (
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
-    ),
+    ],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
 }
 
 # ==========================
 # Simple JWT
 # ==========================
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=int(env("JWT_EXP_DAYS", default=1))),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=int(env("JWT_EXP_DAYS", default=7))),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": env("SECRET_KEY"),
 }
 
 # ==========================
 # CORS
 # ==========================
-CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
+CORS_ALLOWED_ORIGINS = env.list(
+    "CORS_ALLOWED_ORIGINS",
+    default=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+    ]
+)
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
 # ==========================
 # Email Settings
 # ==========================
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = env("EMAIL_HOST")
-EMAIL_PORT = env("EMAIL_PORT")
-EMAIL_USE_TLS = env("EMAIL_USE_TLS")
-EMAIL_HOST_USER = env("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
+EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com")
+EMAIL_PORT = env("EMAIL_PORT", default=587)
+EMAIL_USE_TLS = env("EMAIL_USE_TLS", default=True)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@example.com")
 
 # ==========================
 # Frontend URL
 # ==========================
-FRONTEND_URL = env("FRONTEND_URL")
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
+
+# ==========================
+# Google OAuth2
+# ==========================
+GOOGLE_OAUTH2_CLIENT_ID = env("GOOGLE_OAUTH2_CLIENT_ID", default="")
+
+# ==========================
+# Custom User Model
+# ==========================
+AUTH_USER_MODEL = "accounts.User"
 
 # ==========================
 # Default Primary Key
 # ==========================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ==========================
+# Security Settings
+# ==========================
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
