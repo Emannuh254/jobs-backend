@@ -7,3 +7,8 @@ INFO 2025-09-14 13:03:46,585 autoreload 1393969 140226587164928 Watching for fil
 INFO 2025-09-14 13:04:09,197 autoreload 1394362 139979804467456 Watching for file changes with StatReloader
 INFO 2025-09-14 13:20:15,170 autoreload 1405509 140198626185472 Watching for file changes with StatReloader
 INFO 2025-09-14 13:22:09,426 autoreload 1405509 140198626185472 /home/ghost/jobportal/jobportal/settings.py changed, reloading.
+INFO 2025-09-14 16:19:02,235 autoreload 1524609 139973422387456 Watching for file changes with StatReloader
+INFO 2025-09-14 16:22:24,886 autoreload 1527032 140255355953408 Watching for file changes with StatReloader
+INFO 2025-09-14 16:24:52,055 autoreload 1527032 140255355953408 /home/ghost/jobportal/jobportal/settings.py changed, reloading.
+INFO 2025-09-14 16:24:55,201 autoreload 1528715 140183939162368 Watching for file changes with StatReloader
+INFO 2025-09-14 16:24:58,853 autoreload 1528715 140183939162368 /home/ghost/jobportal/jobportal/settings.py changed, reloading.

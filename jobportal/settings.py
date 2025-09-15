@@ -2,10 +2,13 @@ import os
 from pathlib import Path
 from datetime import timedelta
 import environ
+from dj_database_url import parse as db_url
+
 # ==========================
 # Base Directory
 # ==========================
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 # ==========================
 # Environment Variables
 # ==========================
@@ -13,26 +16,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
 # Load .env file
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
-# ==========================
-# Environment Variable Validation
-# ==========================
-# Validate critical environment variables
-required_env_vars = [
-    "SECRET_KEY",
-    "DATABASE_URL",
-    "EMAIL_HOST_USER",
-    "EMAIL_HOST_PASSWORD",
-    "GOOGLE_OAUTH2_CLIENT_ID",
-]
-for var in required_env_vars:
-    if not env(var):
-        raise ValueError(f"Environment variable {var} is not set")
+
 # ==========================
 # Core Settings
 # ==========================
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-change-me-in-production")
-DEBUG = env("DEBUG", default=False)
+DEBUG = env.bool("DEBUG", default=False)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1", "jobs-backend-1-8pw2.onrender.com"])
+
 # ==========================
 # Installed Apps
 # ==========================
@@ -54,24 +45,12 @@ INSTALLED_APPS = [
     "referrals",           # Referrals app
     "applications",        # Applications app
 ]
-# ==========================
-# Middleware
-# ==========================
-# MIDDLEWARE = [
-#     "corsheaders.middleware.CorsMiddleware",  # Must be at the top
-#     "django.middleware.security.SecurityMiddleware",
-#     "django.contrib.sessions.middleware.SessionMiddleware",
-#     "django.middleware.common.CommonMiddleware",
-#     "django.middleware.csrf.CsrfViewMiddleware",
-#     "django.contrib.auth.middleware.AuthenticationMiddleware",
-#     "django.contrib.messages.middleware.MessageMiddleware",
-#     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-# ]
+
 # ==========================
 # Middleware
 # ==========================
 MIDDLEWARE = [
-    "cors_middleware.CustomCorsMiddleware",  # Custom CORS middleware at the top
+    "corsheaders.middleware.CorsMiddleware",  # Must be at the top
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -82,15 +61,45 @@ MIDDLEWARE = [
 ]
 
 # ==========================
-# CORS (Bypass corsheaders)
+# CORS Settings
 # ==========================
-# We're using a custom middleware instead of corsheaders
-# Remove corsheaders from installed apps if you want
+# Read allowed origins from environment variable
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[
+    "https://emannuh254.github.io",
+    "http://127.0.0.1:5500",
+    "http://localhost:5500",
+])
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+CORS_EXPOSE_HEADERS = [
+    "Content-Type",
+    "X-CSRFToken",
+]
+
 # ==========================
 # URL / WSGI
 # ==========================
 ROOT_URLCONF = "jobportal.urls"
 WSGI_APPLICATION = "jobportal.wsgi.application"
+
 # ==========================
 # Templates
 # ==========================
@@ -109,6 +118,7 @@ TEMPLATES = [
         },
     },
 ]
+
 # ==========================
 # Database
 # ==========================
@@ -119,6 +129,7 @@ DATABASES = {
         engine="django.db.backends.postgresql"
     )
 }
+
 # ==========================
 # Passwords
 # ==========================
@@ -128,6 +139,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+
 # ==========================
 # Authentication Settings
 # ==========================
@@ -135,10 +147,12 @@ AUTHENTICATION_BACKENDS = [
     'accounts.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
+
 # ==========================
 # Custom User Model
 # ==========================
 AUTH_USER_MODEL = 'accounts.User'
+
 # ==========================
 # Internationalization
 # ==========================
@@ -153,6 +167,7 @@ LANGUAGES = [
 LOCALE_PATHS = [
     BASE_DIR / 'locale',
 ]
+
 # ==========================
 # Static & Media Files
 # ==========================
@@ -160,6 +175,7 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
 # ==========================
 # File Upload Settings
 # ==========================
@@ -167,6 +183,7 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB
 FILE_UPLOAD_PERMISSIONS = 0o644
 FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o755
+
 # ==========================
 # Django REST Framework
 # ==========================
@@ -186,6 +203,7 @@ REST_FRAMEWORK = {
         "rest_framework.parsers.JSONParser",
     ],
 }
+
 # ==========================
 # Simple JWT
 # ==========================
@@ -206,64 +224,38 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
-# ==========================
-# CORS (Allow All Origins)
-# ==========================
-# Allow all origins for development - you can restrict this in production
-# CORS_ORIGIN_ALLOW_ALL = True
-# CORS_ALLOW_CREDENTIALS = True
-# CORS_ALLOW_METHODS = [
-#     "DELETE",
-#     "GET",
-#     "OPTIONS",
-#     "PATCH",
-#     "POST",
-#     "PUT",
-# ]
-# CORS_ALLOW_HEADERS = [
-#     "accept",
-#     "accept-encoding",
-#     "authorization",
-#     "content-type",
-#     "dnt",
-#     "origin",
-#     "user-agent",
-#     "x-csrftoken",
-#     "x-requested-with",
-# ]
-# CORS_EXPOSE_HEADERS = [
-#     "Content-Type",
-#     "X-CSRFToken",
-# ]
 
-# Print a warning that CORS is wide open
-print("WARNING: CORS is configured to allow all origins. This should be restricted in production!")
 # ==========================
 # CSRF Settings
 # ==========================
 CSRF_USE_SESSIONS = True
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
+
 # ==========================
 # Email Settings
 # ==========================
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com")
-EMAIL_PORT = env("EMAIL_PORT", default=587)
-EMAIL_USE_TLS = env("EMAIL_USE_TLS", default=True)
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@example.com")
 EMAIL_SUBJECT_PREFIX = "[Your App] "
 EMAIL_TIMEOUT = 30
+
 # ==========================
 # Frontend URL
 # ==========================
-FRONTEND_URL = env("FRONTEND_URL", default="https://emannuh254.github.io")
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5500")
+
 # ==========================
 # Google OAuth2
 # ==========================
 GOOGLE_OAUTH2_CLIENT_ID = env("GOOGLE_OAUTH2_CLIENT_ID", default="")
+GOOGLE_OAUTH2_CLIENT_SECRET = env("GOOGLE_OAUTH2_CLIENT_SECRET", default="")
+
 # ==========================
 # Cache
 # ==========================
@@ -273,6 +265,7 @@ CACHES = {
         'LOCATION': 'unique-snowflake',
     }
 }
+
 # ==========================
 # Logging
 # ==========================
@@ -308,10 +301,11 @@ LOGGING = {
         },
     },
 }
+
 # Create logs directory if it doesn't exist
-import os
 if not os.path.exists(BASE_DIR / 'logs'):
     os.makedirs(BASE_DIR / 'logs')
+
 # ==========================
 # Security Settings
 # ==========================
@@ -322,6 +316,7 @@ CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
+
 # Only enforce security settings when DEBUG is False
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
@@ -343,11 +338,13 @@ if not DEBUG:
     
     # Static files settings for production
     STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+
 # ==========================
 # Default Primary Key
 # ==========================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
 # ==========================
 # Port
 # ==========================
-PORT = int(os.getenv("PORT", 8000))
+PORT = env.int("PORT", default=8000)
