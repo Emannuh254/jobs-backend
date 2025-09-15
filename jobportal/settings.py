@@ -22,7 +22,12 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 # ==========================
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-change-me-in-production")
 DEBUG = env.bool("DEBUG", default=False)
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1", "jobs-backend-1-8pw2.onrender.com"])
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
+    "localhost", 
+    "127.0.0.1", 
+    "jobs-backend-1-8pw2.onrender.com",
+    "jobs-backend-2lsq.onrender.com"  # Added new Render host
+])
 
 # ==========================
 # Installed Apps
@@ -52,7 +57,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",  # Must be at the top
     "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",  # Must be before CsrfViewMiddleware
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -228,7 +233,8 @@ SIMPLE_JWT = {
 # ==========================
 # CSRF Settings
 # ==========================
-# REMOVED: CSRF_USE_SESSIONS = True
+# Changed from sessions to cookies to fix middleware ordering issue
+CSRF_USE_SESSIONS = False
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
 
