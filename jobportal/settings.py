@@ -21,12 +21,15 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-change-me")
 DEBUG = env.bool("DEBUG", default=False)
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
-    "localhost",
-    "127.0.0.1",
-    ".onrender.com",
-    ".github.io",
-])
+ALLOWED_HOSTS = env.list(
+    "ALLOWED_HOSTS",
+    default=["localhost", "127.0.0.1", ".onrender.com", ".github.io"],
+)
+
+# ==========================
+# Frontend URL
+# ==========================
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5500")
 
 # ==========================
 # Installed Apps
@@ -79,7 +82,7 @@ MIDDLEWARE = [
 # CORS Settings
 # ==========================
 if DEBUG:
-    CORS_ALLOW_ALL_ORIGINS = True   # ✅ open during dev
+    CORS_ALLOW_ALL_ORIGINS = True   # open during dev
 else:
     CORS_ALLOW_ALL_ORIGINS = False
     CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[
@@ -126,7 +129,7 @@ DATABASES = {
     "default": env.db_url(
         "DATABASE_URL",
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        engine="django.db.backends.postgresql"
+        engine="django.db.backends.postgresql",
     )
 }
 
@@ -150,8 +153,10 @@ AUTHENTICATION_BACKENDS = [
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
-LOGIN_REDIRECT_URL = env("FRONTEND_URL", default="http://localhost:5500")
-LOGOUT_REDIRECT_URL = env("FRONTEND_URL", default="http://localhost:5500")
+# Redirects after actions
+LOGIN_REDIRECT_URL = FRONTEND_URL + "/home.html"
+ACCOUNT_SIGNUP_REDIRECT_URL = FRONTEND_URL + "/login.html"
+LOGOUT_REDIRECT_URL = FRONTEND_URL + "/login.html"
 
 # ==========================
 # Internationalization
@@ -161,12 +166,6 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 USE_L10N = True
-LANGUAGES = [
-    ("en", "English"),
-]
-LOCALE_PATHS = [
-    BASE_DIR / "locale",
-]
 
 # ==========================
 # Static & Media Files
@@ -191,9 +190,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
-    # "DEFAULT_PERMISSION_CLASSES": [
-    #     "rest_framework.permissions.IsAuthenticatedOrReadOnly",
-     "DEFAULT_PERMISSION_CLASSES": [
+    "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.AllowAny",
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
@@ -221,10 +218,6 @@ SIMPLE_JWT = {
     "USER_ID_CLAIM": "user_id",
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
     "TOKEN_TYPE_CLAIM": "token_type",
-    "JTI_CLAIM": "jti",
-    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
-    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
-    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
 
 # ==========================
@@ -287,27 +280,12 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
-        "file": {
-            "class": "logging.FileHandler",
-            "filename": BASE_DIR / "logs" / "django.log",
-            "formatter": "verbose",
-        },
     },
     "root": {
-        "handlers": ["console", "file"],
+        "handlers": ["console"],
         "level": "INFO",
     },
-    "loggers": {
-        "django": {
-            "handlers": ["console", "file"],
-            "level": "INFO",
-            "propagate": False,
-        },
-    },
 }
-
-if not os.path.exists(BASE_DIR / "logs"):
-    os.makedirs(BASE_DIR / "logs")
 
 # ==========================
 # Security
@@ -344,26 +322,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Port
 # ==========================
 PORT = env.int("PORT", default=8000)
-# ==========================
-# ==========================
-# Redirect URLs
-# ==========================
-# ==========================
-# Frontend URL
-# ==========================
-FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5500")
 
 # ==========================
 # Allauth Account Settings
 # ==========================
-ACCOUNT_AUTHENTICATION_METHOD = "email"  # users log in with email
+ACCOUNT_AUTHENTICATION_METHOD = "email"
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # force email verification
-ACCOUNT_CONFIRM_EMAIL_ON_GET = True  # allows link click = verify
-
-# Redirects after actions
-LOGIN_REDIRECT_URL = FRONTEND_URL + "/home.html"
-ACCOUNT_SIGNUP_REDIRECT_URL = FRONTEND_URL + "/login.html"
-LOGOUT_REDIRECT_URL = FRONTEND_URL + "/login.html"
-
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True
