@@ -18,42 +18,47 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 # ==========================
 # Core Settings
 # ==========================
-SECRET_KEY = env("SECRET_KEY", default="django-insecure-change-me-in-production")
+SECRET_KEY = env("SECRET_KEY", default="django-insecure-change-me")
 DEBUG = env.bool("DEBUG", default=False)
 
-if DEBUG:
-    # Dev: allow everything
-    ALLOWED_HOSTS = ["*"]
-else:
-    # Prod: stricter
-    ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
-        "localhost",
-        "127.0.0.1",
-        ".onrender.com",   # allow all Render subdomains
-        ".github.io",      # allow GitHub Pages
-    ])
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
+    "localhost",
+    "127.0.0.1",
+    ".onrender.com",
+    ".github.io",
+])
 
 # ==========================
 # Installed Apps
 # ==========================
 INSTALLED_APPS = [
+    # Django apps
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # Third-party
+    "django.contrib.sites",   # required by allauth
+
+    # Third-party apps
     "corsheaders",
     "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
-    # Local
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+
+    # Local apps
     "accounts",
     "jobs",
     "referrals",
     "applications",
 ]
+
+SITE_ID = 1
 
 # ==========================
 # Middleware
@@ -65,6 +70,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",  # ✅ required for allauth
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -73,14 +79,13 @@ MIDDLEWARE = [
 # CORS Settings
 # ==========================
 if DEBUG:
-    # Dev: allow all
-    CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOW_ALL_ORIGINS = True   # ✅ open during dev
 else:
     CORS_ALLOW_ALL_ORIGINS = False
     CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[
-        "https://emannuh254.github.io",
         "http://127.0.0.1:5500",
         "http://localhost:5500",
+        "https://emannuh254.github.io",
     ])
     CORS_ALLOWED_ORIGIN_REGEXES = [
         r"^https://.*\.onrender\.com$",
@@ -106,7 +111,7 @@ TEMPLATES = [
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.debug",
-                "django.template.context_processors.request",
+                "django.template.context_processors.request",  # required by allauth
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
@@ -138,11 +143,15 @@ AUTH_PASSWORD_VALIDATORS = [
 # ==========================
 # Authentication
 # ==========================
+AUTH_USER_MODEL = "accounts.User"
+
 AUTHENTICATION_BACKENDS = [
-    'accounts.backends.EmailBackend',
-    'django.contrib.auth.backends.ModelBackend',
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
 ]
-AUTH_USER_MODEL = 'accounts.User'
+
+LOGIN_REDIRECT_URL = env("FRONTEND_URL", default="http://localhost:5500")
+LOGOUT_REDIRECT_URL = env("FRONTEND_URL", default="http://localhost:5500")
 
 # ==========================
 # Internationalization
@@ -152,12 +161,15 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 USE_L10N = True
-
-LANGUAGES = [('en', 'English')]
-LOCALE_PATHS = [BASE_DIR / 'locale']
+LANGUAGES = [
+    ("en", "English"),
+]
+LOCALE_PATHS = [
+    BASE_DIR / "locale",
+]
 
 # ==========================
-# Static & Media
+# Static & Media Files
 # ==========================
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -165,10 +177,10 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # ==========================
-# File Upload
+# File Uploads
 # ==========================
-FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
-DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
 FILE_UPLOAD_PERMISSIONS = 0o644
 FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o755
 
@@ -184,12 +196,16 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
-    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
-    "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+    ],
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+    ],
 }
 
 # ==========================
-# JWT
+# Simple JWT
 # ==========================
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
@@ -201,6 +217,12 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
 
 # ==========================
@@ -208,7 +230,7 @@ SIMPLE_JWT = {
 # ==========================
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = "Lax"
 
 # ==========================
 # Email
@@ -220,52 +242,70 @@ EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@example.com")
-EMAIL_SUBJECT_PREFIX = "[Your App] "
+EMAIL_SUBJECT_PREFIX = "[JobPortal] "
 EMAIL_TIMEOUT = 30
-
-# ==========================
-# Frontend URL
-# ==========================
-FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5500")
 
 # ==========================
 # Google OAuth2
 # ==========================
-GOOGLE_OAUTH2_CLIENT_ID = env("GOOGLE_OAUTH2_CLIENT_ID", default="")
-GOOGLE_OAUTH2_CLIENT_SECRET = env("GOOGLE_OAUTH2_CLIENT_SECRET", default="")
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": env("GOOGLE_OAUTH2_CLIENT_ID", default=""),
+            "secret": env("GOOGLE_OAUTH2_CLIENT_SECRET", default=""),
+            "key": "",
+        },
+    }
+}
 
 # ==========================
 # Cache
 # ==========================
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
     }
 }
 
 # ==========================
 # Logging
 # ==========================
-LOG_DIR = BASE_DIR / 'logs'
-if not os.path.exists(LOG_DIR):
-    os.makedirs(LOG_DIR)
-
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
         },
     },
-    'handlers': {
-        'console': {'class': 'logging.StreamHandler', 'formatter': 'verbose'},
-        'file': {'class': 'logging.FileHandler', 'filename': LOG_DIR / 'django.log', 'formatter': 'verbose'},
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR / "logs" / "django.log",
+            "formatter": "verbose",
+        },
     },
-    'root': {'handlers': ['console', 'file'], 'level': 'INFO'},
+    "root": {
+        "handlers": ["console", "file"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
 }
+
+if not os.path.exists(BASE_DIR / "logs"):
+    os.makedirs(BASE_DIR / "logs")
 
 # ==========================
 # Security
@@ -276,7 +316,7 @@ X_FRAME_OPTIONS = "DENY"
 CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = "Lax"
 
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
@@ -284,10 +324,11 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
     CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-            'LOCATION': env("REDIS_URL", default="redis://127.0.0.1:6379/1"),
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": env("REDIS_URL", default="redis://127.0.0.1:6379/1"),
         }
     }
     STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
