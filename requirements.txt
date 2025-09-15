@@ -17,6 +17,7 @@ google-auth-oauthlib==1.2.1
 google-auth-httplib2==0.2.0
 google-api-python-client==2.154.0
 django-allauth==65.11.2
+python-social-auth
 
 # Security / Crypto
 cryptography==43.0.1
@@ -24,3 +25,4 @@ cryptography==43.0.1
 # Misc
 python-dotenv==1.1.1
 gunicorn==21.2.0
+requests==2.31.0
