@@ -1,24 +1,29 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.sites.shortcuts import get_current_site
-from django.core.mail import send_mail
-from django.conf import settings
-from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.conf import settings
 from .models import User
 from .serializers import UserSerializer, RegisterSerializer
-from rest_framework.views import APIView
 import jwt
+from rest_framework_simplejwt.tokens import RefreshToken
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
+# ==============================
 # Register with email verification
+# ==============================
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
+    permission_classes = [AllowAny]
 
     def perform_create(self, serializer):
-        user = serializer.save()
+        user = serializer.save(is_active=False)  # Require email verification
         token = default_token_generator.make_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         activation_link = f"{settings.FRONTEND_URL}/verify.html?uid={uid}&token={token}"
@@ -31,8 +36,12 @@ class RegisterView(generics.CreateAPIView):
         )
 
 
+# ==============================
 # Email verification endpoint
+# ==============================
 class VerifyEmailView(APIView):
+    permission_classes = [AllowAny]
+
     def get(self, request):
         uid = request.GET.get("uid")
         token = request.GET.get("token")
@@ -49,8 +58,12 @@ class VerifyEmailView(APIView):
         return Response({"error": "Invalid or expired token"}, status=400)
 
 
-# Login
+# ==============================
+# Login with JWT
+# ==============================
 class LoginView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         email = request.data.get("email")
         password = request.data.get("password")
@@ -58,12 +71,67 @@ class LoginView(APIView):
 
         if user and user.is_active:
             login(request, user)
-            return Response({"user": UserSerializer(user).data}, status=200)
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                "user": UserSerializer(user).data,
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+            }, status=200)
         return Response({"error": "Invalid credentials or email not verified"}, status=400)
 
 
+# ==============================
 # Logout
+# ==============================
 class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         logout(request)
         return Response({"success": "Logged out"}, status=200)
+
+
+# ==============================
+# Google Login
+# ==============================
+class GoogleLoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        token = request.data.get("token")
+        try:
+            # Verify Google ID token
+            idinfo = id_token.verify_oauth2_token(
+                token, google_requests.Request(),
+                settings.GOOGLE_OAUTH2_CLIENT_ID
+            )
+
+            email = idinfo["email"]
+            first_name = idinfo.get("given_name", "")
+            last_name = idinfo.get("family_name", "")
+            picture = idinfo.get("picture", "")
+
+            # Get or create user
+            user, created = User.objects.get_or_create(
+                email=email,
+                defaults={
+                    "username": email,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "google_id": idinfo["sub"],
+                    "google_name": f"{first_name} {last_name}",
+                    "google_picture": picture,
+                    "is_active": True,
+                }
+            )
+
+            # Generate JWT
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                "user": UserSerializer(user).data,
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+            }, status=200)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=400)

@@ -37,3 +37,4 @@ ERROR 2025-09-15 11:29:55,789 basehttp 619940 140044780267200 You're accessing t
 INFO 2025-09-15 11:30:16,630 basehttp 619940 140044780267200 "POST /auth/register/%0A HTTP/1.1" 301 0
 INFO 2025-09-15 11:30:16,633 basehttp 619940 140044780267200 code 400, message Bad request version ('À\x13À')
 ERROR 2025-09-15 11:30:16,634 basehttp 619940 140044780267200 You're accessing the development server over HTTPS, but it only supports HTTP.
+INFO 2025-09-15 11:41:29,698 autoreload 629418 140538909577472 Watching for file changes with StatReloader
