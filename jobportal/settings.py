@@ -154,9 +154,10 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # Redirects after actions
-LOGIN_REDIRECT_URL = FRONTEND_URL + "https://emannuh254.github.io/Jobs/home.html"
-ACCOUNT_SIGNUP_REDIRECT_URL = FRONTEND_URL + "https://emannuh254.github.io/Jobs/index.html"
-LOGOUT_REDIRECT_URL = FRONTEND_URL + "https://emannuh254.github.io/Jobs/home.html"
+# Allauth redirect URLs
+LOGIN_REDIRECT_URL = "https://emannuh254.github.io/Jobs/home.html"
+ACCOUNT_SIGNUP_REDIRECT_URL = "https://emannuh254.github.io/Jobs/index.html"
+LOGOUT_REDIRECT_URL = "https://emannuh254.github.io/Jobs/home.html"
 
 # ==========================
 # Internationalization
