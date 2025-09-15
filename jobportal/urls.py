@@ -11,5 +11,4 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     
     # Jobs and other apps
-    path("jobs/", include("jobs.urls")),
 ]
