@@ -12,9 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ==========================
 # Environment Variables
 # ==========================
-# Initialize environment
 env = environ.Env()
-# Load .env file
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 # ==========================
@@ -22,12 +20,18 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 # ==========================
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-change-me-in-production")
 DEBUG = env.bool("DEBUG", default=False)
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
-    "localhost", 
-    "127.0.0.1", 
-    "jobs-backend-1-8pw2.onrender.com",
-    "jobs-backend-2lsq.onrender.com"  # Added new Render host
-])
+
+if DEBUG:
+    # Dev: allow everything
+    ALLOWED_HOSTS = ["*"]
+else:
+    # Prod: stricter
+    ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[
+        "localhost",
+        "127.0.0.1",
+        ".onrender.com",   # allow all Render subdomains
+        ".github.io",      # allow GitHub Pages
+    ])
 
 # ==========================
 # Installed Apps
@@ -39,25 +43,25 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # Third-party apps
-    "corsheaders",          # For CORS
-    "rest_framework",       # Django REST Framework
+    # Third-party
+    "corsheaders",
+    "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
-    # Local apps
-    "accounts",             # Your app
-    "jobs",                # Jobs app
-    "referrals",           # Referrals app
-    "applications",        # Applications app
+    # Local
+    "accounts",
+    "jobs",
+    "referrals",
+    "applications",
 ]
 
 # ==========================
 # Middleware
 # ==========================
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",  # Must be at the top
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",  # Must be before CsrfViewMiddleware
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -68,36 +72,22 @@ MIDDLEWARE = [
 # ==========================
 # CORS Settings
 # ==========================
-# Read allowed origins from environment variable
-CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[
-    "https://emannuh254.github.io",
-    "http://127.0.0.1:5500",
-    "http://localhost:5500",
-])
+if DEBUG:
+    # Dev: allow all
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[
+        "https://emannuh254.github.io",
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+    ])
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        r"^https://.*\.onrender\.com$",
+        r"^https://.*\.github\.io$",
+    ]
+
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_METHODS = [
-    "DELETE",
-    "GET",
-    "OPTIONS",
-    "PATCH",
-    "POST",
-    "PUT",
-]
-CORS_ALLOW_HEADERS = [
-    "accept",
-    "accept-encoding",
-    "authorization",
-    "content-type",
-    "dnt",
-    "origin",
-    "user-agent",
-    "x-csrftoken",
-    "x-requested-with",
-]
-CORS_EXPOSE_HEADERS = [
-    "Content-Type",
-    "X-CSRFToken",
-]
 
 # ==========================
 # URL / WSGI
@@ -146,16 +136,12 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # ==========================
-# Authentication Settings
+# Authentication
 # ==========================
 AUTHENTICATION_BACKENDS = [
     'accounts.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
-
-# ==========================
-# Custom User Model
-# ==========================
 AUTH_USER_MODEL = 'accounts.User'
 
 # ==========================
@@ -166,15 +152,12 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 USE_L10N = True
-LANGUAGES = [
-    ('en', 'English'),
-]
-LOCALE_PATHS = [
-    BASE_DIR / 'locale',
-]
+
+LANGUAGES = [('en', 'English')]
+LOCALE_PATHS = [BASE_DIR / 'locale']
 
 # ==========================
-# Static & Media Files
+# Static & Media
 # ==========================
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -182,10 +165,10 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # ==========================
-# File Upload Settings
+# File Upload
 # ==========================
-FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB
-DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 FILE_UPLOAD_PERMISSIONS = 0o644
 FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o755
 
@@ -201,16 +184,12 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
-    "DEFAULT_RENDERER_CLASSES": [
-        "rest_framework.renderers.JSONRenderer",
-    ],
-    "DEFAULT_PARSER_CLASSES": [
-        "rest_framework.parsers.JSONParser",
-    ],
+    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+    "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
 }
 
 # ==========================
-# Simple JWT
+# JWT
 # ==========================
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
@@ -222,24 +201,17 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
-    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
-    "TOKEN_TYPE_CLAIM": "token_type",
-    "JTI_CLAIM": "jti",
-    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
-    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
-    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
 
 # ==========================
-# CSRF Settings
+# CSRF
 # ==========================
-# Changed from sessions to cookies to fix middleware ordering issue
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
 
 # ==========================
-# Email Settings
+# Email
 # ==========================
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com")
@@ -275,6 +247,10 @@ CACHES = {
 # ==========================
 # Logging
 # ==========================
+LOG_DIR = BASE_DIR / 'logs'
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -285,35 +261,14 @@ LOGGING = {
         },
     },
     'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
-        },
-        'file': {
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'django.log',
-            'formatter': 'verbose',
-        },
+        'console': {'class': 'logging.StreamHandler', 'formatter': 'verbose'},
+        'file': {'class': 'logging.FileHandler', 'filename': LOG_DIR / 'django.log', 'formatter': 'verbose'},
     },
-    'root': {
-        'handlers': ['console', 'file'],
-        'level': 'INFO',
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-    },
+    'root': {'handlers': ['console', 'file'], 'level': 'INFO'},
 }
 
-# Create logs directory if it doesn't exist
-if not os.path.exists(BASE_DIR / 'logs'):
-    os.makedirs(BASE_DIR / 'logs')
-
 # ==========================
-# Security Settings
+# Security
 # ==========================
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -323,30 +278,22 @@ SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 
-# Only enforce security settings when DEBUG is False
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    
-    # Email backend for production
-    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-    
-    # Cache backend for production
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.redis.RedisCache',
             'LOCATION': env("REDIS_URL", default="redis://127.0.0.1:6379/1"),
         }
     }
-    
-    # Static files settings for production
     STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
 
 # ==========================
-# Default Primary Key
+# Default PK
 # ==========================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
