@@ -16,3 +16,24 @@ INFO 2025-09-15 09:10:53,240 autoreload 526359 140673511608576 Watching for file
 INFO 2025-09-15 09:11:29,271 autoreload 526359 140673511608576 /home/ghost/jobportal/jobportal/urls.py changed, reloading.
 INFO 2025-09-15 09:11:29,955 autoreload 526733 140536823718144 Watching for file changes with StatReloader
 INFO 2025-09-15 09:11:37,363 autoreload 526891 139866586571008 Watching for file changes with StatReloader
+INFO 2025-09-15 10:13:15,841 autoreload 570033 139927114014976 Watching for file changes with StatReloader
+INFO 2025-09-15 10:43:18,047 autoreload 590013 140399648669952 Watching for file changes with StatReloader
+INFO 2025-09-15 11:09:17,718 basehttp 590013 140399544985280 "POST //auth/register/%0A HTTP/1.1" 301 0
+INFO 2025-09-15 11:09:17,729 basehttp 590013 140399536592576 code 400, message Bad request version ('À\x13À')
+ERROR 2025-09-15 11:09:17,736 basehttp 590013 140399536592576 You're accessing the development server over HTTPS, but it only supports HTTP.
+INFO 2025-09-15 11:10:24,074 basehttp 590013 140399536592576 "POST /auth/register/%0A HTTP/1.1" 301 0
+INFO 2025-09-15 11:10:24,083 basehttp 590013 140399536592576 code 400, message Bad request version ('ÿ')
+ERROR 2025-09-15 11:10:24,085 basehttp 590013 140399536592576 You're accessing the development server over HTTPS, but it only supports HTTP.
+INFO 2025-09-15 11:12:11,914 basehttp 590013 140399536592576 "POST /auth/register/%0A HTTP/1.1" 301 0
+INFO 2025-09-15 11:12:11,928 basehttp 590013 140399536592576 code 400, message Bad request version ('À\x13À')
+ERROR 2025-09-15 11:12:11,936 basehttp 590013 140399536592576 You're accessing the development server over HTTPS, but it only supports HTTP.
+INFO 2025-09-15 11:26:48,032 autoreload 619940 140044883665152 Watching for file changes with StatReloader
+INFO 2025-09-15 11:27:21,348 basehttp 619940 140044780267200 "POST /auth/register/%0A HTTP/1.1" 301 0
+INFO 2025-09-15 11:27:21,356 basehttp 619940 140044780267200 code 400, message Bad request version ('À\x13À')
+ERROR 2025-09-15 11:27:21,356 basehttp 619940 140044780267200 You're accessing the development server over HTTPS, but it only supports HTTP.
+INFO 2025-09-15 11:29:55,784 basehttp 619940 140044780267200 "POST /auth/register/%0A HTTP/1.1" 301 0
+INFO 2025-09-15 11:29:55,787 basehttp 619940 140044780267200 code 400, message Bad request version ('À\x13À')
+ERROR 2025-09-15 11:29:55,789 basehttp 619940 140044780267200 You're accessing the development server over HTTPS, but it only supports HTTP.
+INFO 2025-09-15 11:30:16,630 basehttp 619940 140044780267200 "POST /auth/register/%0A HTTP/1.1" 301 0
+INFO 2025-09-15 11:30:16,633 basehttp 619940 140044780267200 code 400, message Bad request version ('À\x13À')
+ERROR 2025-09-15 11:30:16,634 basehttp 619940 140044780267200 You're accessing the development server over HTTPS, but it only supports HTTP.
