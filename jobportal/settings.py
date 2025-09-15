@@ -228,7 +228,7 @@ SIMPLE_JWT = {
 # ==========================
 # CSRF Settings
 # ==========================
-CSRF_USE_SESSIONS = True
+# REMOVED: CSRF_USE_SESSIONS = True
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
 
