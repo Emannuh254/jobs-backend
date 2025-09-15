@@ -9,5 +9,8 @@ class User(AbstractUser):
     referral_code = models.CharField(max_length=20, blank=True, null=True)
     points = models.IntegerField(default=0)
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username']  # keep username but login is email
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["username"]  # username kept for compatibility
+
+    def __str__(self):
+        return self.email

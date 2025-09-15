@@ -342,3 +342,26 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Port
 # ==========================
 PORT = env.int("PORT", default=8000)
+# ==========================
+# ==========================
+# Redirect URLs
+# ==========================
+# ==========================
+# Frontend URL
+# ==========================
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5500")
+
+# ==========================
+# Allauth Account Settings
+# ==========================
+ACCOUNT_AUTHENTICATION_METHOD = "email"  # users log in with email
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"  # force email verification
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True  # allows link click = verify
+
+# Redirects after actions
+LOGIN_REDIRECT_URL = FRONTEND_URL + "/home.html"
+ACCOUNT_SIGNUP_REDIRECT_URL = FRONTEND_URL + "/login.html"
+LOGOUT_REDIRECT_URL = FRONTEND_URL + "/login.html"
+

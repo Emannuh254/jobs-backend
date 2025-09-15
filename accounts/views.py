@@ -1,55 +1,69 @@
-import requests
-from django.conf import settings
+from rest_framework import generics, status
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework import status
-from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.sites.shortcuts import get_current_site
+from django.core.mail import send_mail
+from django.conf import settings
+from django.urls import reverse
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.contrib.auth.tokens import default_token_generator
 from .models import User
-from .serializers import UserSerializer
+from .serializers import UserSerializer, RegisterSerializer
+from rest_framework.views import APIView
+import jwt
 
-class GoogleLoginView(APIView):
-    def post(self, request):
-        token = request.data.get("token")
+# Register with email verification
+class RegisterView(generics.CreateAPIView):
+    serializer_class = RegisterSerializer
 
-        # Verify Google token
-        google_url = "https://oauth2.googleapis.com/tokeninfo"
-        resp = requests.get(google_url, params={"id_token": token})
+    def perform_create(self, serializer):
+        user = serializer.save()
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        activation_link = f"{settings.FRONTEND_URL}/verify.html?uid={uid}&token={token}"
 
-        if resp.status_code != 200:
-            return Response({"error": "Invalid Google token"}, status=400)
+        send_mail(
+            "Verify your account",
+            f"Click to verify your account: {activation_link}",
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+        )
 
-        data = resp.json()
-        email = data.get("email")
-        first_name = data.get("given_name", "")
-        last_name = data.get("family_name", "")
-        google_id = data.get("sub")
-        google_name = f"{first_name} {last_name}"
-        google_picture = data.get("picture", "")
 
-        if not email:
-            return Response({"error": "Google account has no email"}, status=400)
+# Email verification endpoint
+class VerifyEmailView(APIView):
+    def get(self, request):
+        uid = request.GET.get("uid")
+        token = request.GET.get("token")
 
-        # Get or create user
-        user, created = User.objects.get_or_create(email=email, defaults={
-            "username": email,
-            "first_name": first_name,
-            "last_name": last_name,
-            "google_id": google_id,
-            "google_name": google_name,
-            "google_picture": google_picture,
-        })
+        try:
+            user = User.objects.get(pk=force_str(urlsafe_base64_decode(uid)))
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({"error": "Invalid link"}, status=400)
 
-        if not created:
-            user.google_id = google_id
-            user.google_name = google_name
-            user.google_picture = google_picture
+        if default_token_generator.check_token(user, token):
+            user.is_active = True
             user.save()
+            return Response({"success": "Account verified"})
+        return Response({"error": "Invalid or expired token"}, status=400)
 
-        # Issue JWT tokens
-        refresh = RefreshToken.for_user(user)
 
-        return Response({
-            "access": str(refresh.access_token),
-            "refresh": str(refresh),
-            "user": UserSerializer(user).data
-        })
+# Login
+class LoginView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        password = request.data.get("password")
+        user = authenticate(request, email=email, password=password)
+
+        if user and user.is_active:
+            login(request, user)
+            return Response({"user": UserSerializer(user).data}, status=200)
+        return Response({"error": "Invalid credentials or email not verified"}, status=400)
+
+
+# Logout
+class LogoutView(APIView):
+    def post(self, request):
+        logout(request)
+        return Response({"success": "Logged out"}, status=200)

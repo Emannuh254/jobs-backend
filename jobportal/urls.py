@@ -3,5 +3,13 @@ from django.urls import path, include
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("accounts/", include("allauth.urls")),  # ✅ adds Google login routes
+    
+    # Your custom accounts app (API endpoints for JWT, registration, etc.)
+    path("auth/", include("accounts.urls")),
+    
+    # Django-allauth routes (Google OAuth2 etc.)
+    path("accounts/", include("allauth.urls")),
+    
+    # Jobs and other apps
+    path("jobs/", include("jobs.urls")),
 ]
