@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 from datetime import timedelta
 import environ
-from dj_database_url import parse as db_url
 
 # ==========================
 # Base Directory
@@ -47,6 +46,7 @@ INSTALLED_APPS = [
     # Third-party apps
     "corsheaders",
     "rest_framework",
+    "rest_framework.authtoken",   # ✅ add this for dj-rest-auth compatibility
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "allauth",
@@ -77,25 +77,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
-
-# ==========================
-# CORS Settings
-# ==========================
-if DEBUG:
-    CORS_ALLOW_ALL_ORIGINS = True   # open during dev
-else:
-    CORS_ALLOW_ALL_ORIGINS = False
-    CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[
-        "http://127.0.0.1:5500",
-        "http://localhost:5500",
-        "https://emannuh254.github.io",
-    ])
-    CORS_ALLOWED_ORIGIN_REGEXES = [
-        r"^https://.*\.onrender\.com$",
-        r"^https://.*\.github\.io$",
-    ]
-
-CORS_ALLOW_CREDENTIALS = True
 
 # ==========================
 # URL / WSGI
@@ -134,16 +115,6 @@ DATABASES = {
 }
 
 # ==========================
-# Passwords
-# ==========================
-AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
-]
-
-# ==========================
 # Authentication
 # ==========================
 AUTH_USER_MODEL = "accounts.User"
@@ -151,41 +122,14 @@ AUTH_USER_MODEL = "accounts.User"
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
+    "accounts.backends.EmailBackend",  # custom email login
 ]
 
-# Redirects after actions
-# Allauth redirect URLs
-LOGIN_REDIRECT_URL = "https://emannuh254.github.io/Jobs/home.html"
-ACCOUNT_SIGNUP_REDIRECT_URL = "https://emannuh254.github.io/Jobs/index.html"
-LOGOUT_REDIRECT_URL = "https://emannuh254.github.io/Jobs/home.html"
+LOGIN_REDIRECT_URL = f"{FRONTEND_URL}/home.html"
+LOGOUT_REDIRECT_URL = f"{FRONTEND_URL}/home.html"
 
 # ==========================
-# Internationalization
-# ==========================
-LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
-USE_I18N = True
-USE_TZ = True
-USE_L10N = True
-
-# ==========================
-# Static & Media Files
-# ==========================
-STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
-
-# ==========================
-# File Uploads
-# ==========================
-FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB
-DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
-FILE_UPLOAD_PERMISSIONS = 0o644
-FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o755
-
-# ==========================
-# Django REST Framework
+# REST Framework
 # ==========================
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -205,15 +149,15 @@ REST_FRAMEWORK = {
 }
 
 # ==========================
-# Simple JWT
+# JWT Settings
 # ==========================
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=int(env("JWT_EXP_DAYS", default=7))),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "ALGORITHM": "HS256",
-    "SIGNING_KEY": env("SECRET_KEY"),
+    "SIGNING_KEY": SECRET_KEY,
     "AUTH_HEADER_TYPES": ("Bearer",),
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
@@ -221,12 +165,80 @@ SIMPLE_JWT = {
     "TOKEN_TYPE_CLAIM": "token_type",
 }
 
+REST_USE_JWT = True
+JWT_AUTH_COOKIE = "access"
+JWT_AUTH_REFRESH_COOKIE = "refresh"
+
 # ==========================
-# CSRF
+# Allauth Account
 # ==========================
-CSRF_USE_SESSIONS = False
-CSRF_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SAMESITE = "Lax"
+ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_SESSION_REMEMBER = True
+ACCOUNT_UNIQUE_EMAIL = True
+
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = False
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {"access_type": "online"},
+        "OAUTH_PKCE_ENABLED": True,
+        "APP": {
+            "client_id": env("GOOGLE_OAUTH2_CLIENT_ID", default=""),
+            "secret": env("GOOGLE_OAUTH2_CLIENT_SECRET", default=""),
+        },
+    }
+}
+
+# ==========================
+# Passwords
+# ==========================
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+
+# ==========================
+# Internationalization
+# ==========================
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "UTC"
+USE_I18N = True
+USE_TZ = True
+USE_L10N = True
+
+# ==========================
+# Static & Media Files
+# ==========================
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# ==========================
+# CORS
+# ==========================
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+        "https://emannuh254.github.io",
+    ])
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        r"^https://.*\.onrender\.com$",
+        r"^https://.*\.github\.io$",
+    ]
+
+CORS_ALLOW_CREDENTIALS = True
 
 # ==========================
 # Email
@@ -242,27 +254,22 @@ EMAIL_SUBJECT_PREFIX = "[JobPortal] "
 EMAIL_TIMEOUT = 30
 
 # ==========================
-# Google OAuth2
+# Security
 # ==========================
-SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        "APP": {
-            "client_id": env("GOOGLE_OAUTH2_CLIENT_ID", default=""),
-            "secret": env("GOOGLE_OAUTH2_CLIENT_SECRET", default=""),
-            "key": "",
-        },
-    }
-}
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
 
-# ==========================
-# Cache
-# ==========================
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "unique-snowflake",
-    }
-}
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # ==========================
 # Logging
@@ -289,23 +296,9 @@ LOGGING = {
 }
 
 # ==========================
-# Security
+# Cache
 # ==========================
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = "DENY"
-CSRF_COOKIE_SECURE = not DEBUG
-SESSION_COOKIE_SECURE = not DEBUG
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = "Lax"
-
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
@@ -313,46 +306,15 @@ if not DEBUG:
         }
     }
     STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "unique-snowflake",
+        }
+    }
 
 # ==========================
 # Default PK
 # ==========================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# ==========================
-# Port
-# ==========================
-PORT = env.int("PORT", default=8000)
-
-# ==========================
-# Allauth Account Settings
-# ==========================
-ACCOUNT_AUTHENTICATION_METHOD = "email"
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"
-ACCOUNT_CONFIRM_EMAIL_ON_GET = False
-ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
-ACCOUNT_LOGIN_ON_PASSWORD_RESET = True
-ACCOUNT_SESSION_REMEMBER = True
-SOCIALACCOUNT_AUTO_SIGNUP = True
-SOCIALACCOUNT_EMAIL_VERIFICATION = False  # Skip email verification for social accounts
-SOCIALACCOUNT_LOGIN_ON_GET = True
-# Google OAuth2
-# ==========================
-SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        "SCOPE": [
-            "profile",
-            "email",
-        ],
-        "AUTH_PARAMS": {
-            "access_type": "online",
-        },
-        "OAUTH_PKCE_ENABLED": True,
-        "APP": {
-            "client_id": env("GOOGLE_OAUTH2_CLIENT_ID"),
-            "secret": env("GOOGLE_OAUTH2_CLIENT_SECRET"),
-        }
-    }
-}
