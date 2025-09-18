@@ -41,7 +41,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django.contrib.sites",   # required by allauth
+    "django.contrib.sites", 
+    "django_extensions",
+    # required by allauth
 
     # Third-party apps
     "corsheaders",
@@ -59,6 +61,7 @@ INSTALLED_APPS = [
     "jobs",
     "referrals",
     "applications",
+    "panel",
 ]
 
 SITE_ID = 1

@@ -26,4 +26,5 @@ cryptography==43.0.1
 python-dotenv==1.1.1
 gunicorn==21.2.0
 requests==2.31.0
-dj_rest_auth=7.0.1
+dj_rest_auth==7.0
+django-extensions==4.1

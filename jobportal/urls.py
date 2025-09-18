@@ -10,5 +10,9 @@ urlpatterns = [
     # Django-allauth routes (Google OAuth2 etc.)
     path("accounts/", include("allauth.urls")),
     
+
+    path('panel/', include('panel.urls')),
+    
+    
     # Jobs and other apps
 ]
