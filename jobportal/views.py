@@ -23,6 +23,7 @@ def api_info(request):
                 "login": "/auth/login/",
                 "google-login": "/auth/google-login/",
                 "forgot-password": "/auth/forgot-password/"
+                
             }
         }
     })

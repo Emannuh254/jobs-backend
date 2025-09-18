@@ -117,6 +117,14 @@ DATABASES = {
     )
 }
 
+# Add database connection pooling for production
+if not DEBUG:
+    DATABASES["default"]["CONN_MAX_AGE"] = 60
+    DATABASES["default"]["OPTIONS"] = {
+        "connect_timeout": 10,
+        "options": "-c statement_timeout=10000"
+    }
+
 # ==========================
 # Authentication
 # ==========================
@@ -149,6 +157,15 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
     ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "login": "5/min",
+        "register": "3/min",
+        "job_post": "10/hour",
+    },
+    "EXCEPTION_HANDLER": "rest_framework.views.exception_handler",
 }
 
 # ==========================
@@ -166,6 +183,7 @@ SIMPLE_JWT = {
     "USER_ID_CLAIM": "user_id",
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
     "TOKEN_TYPE_CLAIM": "token_type",
+    "JTI_CLAIM": "jti",
 }
 
 REST_USE_JWT = True
@@ -181,6 +199,10 @@ ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_SESSION_REMEMBER = True
 ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
+ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300  # 5 minutes
+ACCOUNT_PASSWORD_RESET_TIMEOUT = 900  # 15 minutes
+ACCOUNT_LOGOUT_ON_PASSWORD_CHANGE = True
 
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_EMAIL_VERIFICATION = False
@@ -225,7 +247,6 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # ==========================
-# ==========================
 # CORS Settings
 # ==========================
 from django.conf import settings
@@ -242,11 +263,33 @@ else:
             "http://127.0.0.1:5500",
             "http://localhost:5500",
             "https://emannuh254.github.io",
+            env("FRONTEND_URL", default=""),  # Add frontend URL from env
         ],
     )
     CORS_ALLOWED_ORIGIN_REGEXES = [
         r"^https:\/\/.*\.onrender\.com$",
         r"^https:\/\/.*\.github\.io$",
+    ]
+    CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
+    CORS_ALLOW_CREDENTIALS = True
+    CORS_ALLOW_METHODS = [
+        "DELETE",
+        "GET",
+        "OPTIONS",
+        "PATCH",
+        "POST",
+        "PUT",
+    ]
+    CORS_ALLOW_HEADERS = [
+        "accept",
+        "accept-encoding",
+        "authorization",
+        "content-type",
+        "dnt",
+        "origin",
+        "user-agent",
+        "x-csrftoken",
+        "x-requested-with",
     ]
 
 # Credentials (cookies, Authorization headers, etc.)
@@ -275,13 +318,20 @@ CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
 
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
-    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SAMESITE = "None"
+    CSRF_COOKIE_SAMESITE = "None"
+    # Only set SameSite=None if secure
+    if SESSION_COOKIE_SECURE:
+        SESSION_COOKIE_SAMESITE = "None"
+        CSRF_COOKIE_SAMESITE = "None"
 
 # ==========================
 # Logging
@@ -294,18 +344,44 @@ LOGGING = {
             "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
             "style": "{",
         },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
     },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": BASE_DIR / "logs" / "django.log",
+            "maxBytes": 1024 * 1024 * 5,  # 5 MB
+            "backupCount": 5,
+            "formatter": "verbose",
+        },
     },
     "root": {
-        "handlers": ["console"],
+        "handlers": ["console", "file"],
         "level": "INFO",
     },
+    "loggers": {
+        "django": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.security": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
 }
+
+# Create logs directory if it doesn't exist
+os.makedirs(BASE_DIR / "logs", exist_ok=True)
 
 # ==========================
 # Cache
@@ -315,6 +391,12 @@ if not DEBUG:
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
             "LOCATION": env("REDIS_URL", default="redis://127.0.0.1:6379/1"),
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
+                "IGNORE_EXCEPTIONS": True,
+            },
+            "KEY_PREFIX": "jobportal"
         }
     }
     STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
@@ -330,3 +412,13 @@ else:
 # Default PK
 # ==========================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ==========================
+# Custom Settings
+# ==========================
+# Job portal specific settings
+JOB_APPLICATION_EXPIRY_DAYS = 30
+MAX_JOB_POSTINGS_PER_DAY = 10
+MAX_TAGS_PER_JOB = 5
+MIN_SALARY_DISPLAY = 10000
+MAX_SALARY_DISPLAY = 500000

@@ -1,5 +1,10 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
+
+
+def home(request):
+    return JsonResponse({"message": "Job Portal API is running 🚀"})
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -12,6 +17,7 @@ urlpatterns = [
     
 
     path('panel/', include('panel.urls')),
+    path("", home),
     
     
     # Jobs and other apps
