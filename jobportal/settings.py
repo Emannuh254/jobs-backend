@@ -225,22 +225,31 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # ==========================
-# CORS
 # ==========================
-if DEBUG:
+# CORS Settings
+# ==========================
+from django.conf import settings
+
+if settings.DEBUG:
+    # Allow everything in development for quick testing
     CORS_ALLOW_ALL_ORIGINS = True
 else:
+    # Be strict in production
     CORS_ALLOW_ALL_ORIGINS = False
-    CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[
-        "http://127.0.0.1:5500",
-        "http://localhost:5500",
-        "https://emannuh254.github.io",
-    ])
+    CORS_ALLOWED_ORIGINS = env.list(
+        "CORS_ALLOWED_ORIGINS",
+        default=[
+            "http://127.0.0.1:5500",
+            "http://localhost:5500",
+            "https://emannuh254.github.io",
+        ],
+    )
     CORS_ALLOWED_ORIGIN_REGEXES = [
-        r"^https://.*\.onrender\.com$",
-        r"^https://.*\.github\.io$",
+        r"^https:\/\/.*\.onrender\.com$",
+        r"^https:\/\/.*\.github\.io$",
     ]
 
+# Credentials (cookies, Authorization headers, etc.)
 CORS_ALLOW_CREDENTIALS = True
 
 # ==========================
